@@ -1,4 +1,5 @@
 import pygame
+import copy
 from constants import ROWS, COLS, SQUARE_SIZE, WHITE, BLACK, GREEN, YELLOW, RED, BOARD_HEIGHT, BOARD_WIDTH
 from pieces import King, Queen, Bishop, Knight, Rook, Pawn, Empty
 
@@ -62,9 +63,10 @@ class ChessBoard:
         self.position = None
         self.dragging = False
         self.moves = []
-        self.check = None
-        self.checking_pieces = []
-        self.lastMove = Move()
+        self.check_pos = None   # Position of King under check
+        self.check_color = None # Color of King under check
+        self.checking_pieces = []   # Pieces checking the King
+        self.lastMove = Move()  # Keeps track of last move (piece, old_row, old_col, new_row, new_col)
 
     
         
@@ -111,7 +113,7 @@ class ChessBoard:
                             pygame.draw.circle(transparent_surface, GREEN, (col * SQUARE_SIZE + (SQUARE_SIZE / 2), row * SQUARE_SIZE + (SQUARE_SIZE / 2)), 20)
                 
                 # Draw indicator for check
-                if (row, col) == self.check:
+                if (row, col) == self.check_pos:
                     pygame.draw.circle(transparent_surface, RED, (col * SQUARE_SIZE + (SQUARE_SIZE / 2), row * SQUARE_SIZE + (SQUARE_SIZE / 2)), 48)
 
         win.blit(transparent_surface, (0, 0))
@@ -146,6 +148,7 @@ class ChessBoard:
                     self.chess_board[row_index][col_index] = empty_piece    # Remove piece from original position and replace with empty piece
                     # Check if new spot has a piece, if so, add that piece to list of taken pieces and remove from list of current pieces
                     old_piece = self.chess_board[new_row][new_col]
+                    dead_pawn = None
                     if not isinstance(old_piece, Empty):    # Check if new spot is not empty
                         if old_piece.color == 'white':
                             self.white_pieces.remove(old_piece)
@@ -169,14 +172,21 @@ class ChessBoard:
                                 self.chess_board[new_row - 1][new_col] = empty_piece
                             
                     self.chess_board[new_row][new_col] = piece  # Add piece to new position
-                    self.lastMove.updateMove(piece, row_index, col_index, new_row, new_col)
-                    self.look_for_check(piece.color)
+                    # Update lastMove
+                    if old_piece.type != 'Empty':
+                        self.lastMove.updateMove(piece, row_index, col_index, new_row, new_col, old_piece)
+                    elif dead_pawn != None:
+                        self.lastMove.updateMove(piece, row_index, col_index, new_row, new_col, dead_pawn)
+                    else:
+                        self.lastMove.updateMove(piece, row_index, col_index, new_row, new_col, None)
+                    self.look_for_check(piece.color)    # See if move introduces check to enemy king
+                    # TODO: Check if pawn reaches back rank to promote
                     return
                 
     
     # Look for check on enemy king after you move (takes color of the piece that just moved)
     def look_for_check(self, color):
-        self.check = None
+        self.check_pos = None
         checking_pieces = []
         # Get location of king
         king_row = None
@@ -197,10 +207,61 @@ class ChessBoard:
                     moves = piece.get_valid_moves(row_index, col_index, self)
                     if (king_row, king_col) in moves:   # if king is in valid move
                         checking_pieces.append(piece)
-                        self.check = (king_row, king_col)
+                        self.check_pos = (king_row, king_col)
+                        if color == 'white': self.check_color = 'black'
+                        else: self.check_color = 'white'
         self.checking_pieces = checking_pieces
+        # TODO: Check for checkmate: see if King has any valid moves or if other piece can take attacking piece
         return
+    
 
+    # Tells main if king is in check
+    def in_check(self, color):
+        if self.check_color == color:
+            return True
+        return False
+
+
+    # Check if move leaves own King in check - return True if move is valid, false if move leaves king in check
+    def validate_move_check(self, piece, old_row, old_col, new_row, new_col):
+        temp_board = self.copy_board()  # Copy Board to test moves
+        ans = True  # Return value
+        # Move piece
+        temp_board.chess_board[new_row][new_col] = piece
+        temp_board.chess_board[old_row][old_col] = Empty()
+        
+        # Get location of king
+        king_row = None
+        king_col = None
+        for row_index, row in enumerate(temp_board.chess_board):
+            found = False
+            for col_index, board_piece in enumerate(row):
+                if piece.type == 'King' and board_piece.color == piece.color:
+                    king_row = row_index
+                    king_col = col_index
+                    break
+            if found:
+                break
+        
+        # Check to see if any enemy pieces have a valid move attacking the king
+        for row_index, row in enumerate(temp_board.chess_board):
+            done = False
+            for col_index, board_piece in enumerate(row):
+                if board_piece.color != piece.color:    # Enemy piece
+                    moves = piece.get_attacks(row_index, col_index, temp_board)
+                    if moves != None  and (king_row, king_col) in moves:   # if king is in valid move
+                        ans = False
+                        break
+            if done:
+                break
+        return ans
+    
+
+    def copy_board(self):
+        new_board = ChessBoard()
+        new_board.chess_board = copy.deepcopy(self.chess_board)
+        new_board.lastMove = copy.copy(self.lastMove)
+        return new_board
 
 
 
@@ -212,11 +273,12 @@ class Move:
         self.old_col = None
         self.new_row = None
         self.new_col = None
+        self.piece_taken = None
 
-
-    def updateMove(self, piece, old_row, old_col, new_row, new_col):
+    def updateMove(self, piece, old_row, old_col, new_row, new_col, piece_taken):
         self.piece = piece
         self.old_row = old_row
         self.old_col = old_col
         self.new_row = new_row
         self.new_col = new_col
+        self.piece_taken = piece_taken

@@ -41,7 +41,11 @@ while running:
                     # Bind piece to the mouse
                     dragging = True
                     # Display possible moves (updates moves which gets sent to board.py for rendering through drag_piece function)
-                    moves = piece.get_valid_moves(row, col, chess_board)
+                    if chess_board.in_check(piece.color):   # Check if king for clicked piece is in check
+                        moves = piece.get_valid_moves_check(row, col, chess_board)  # TODO: Valid moves from check position
+                    else:
+                        moves = piece.get_valid_moves(row, col, chess_board)
+                        print(moves)
 
             
 
