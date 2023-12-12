@@ -40,9 +40,9 @@ while running:
                 if not isinstance(piece, Empty):    # Check if there is a piece there
                     # Bind piece to the mouse
                     dragging = True
-                    # TODO: Display possible moves
+                    # Display possible moves (updates moves which gets sent to board.py for rendering through drag_piece function)
                     moves = piece.get_valid_moves(row, col, chess_board)
-                    print(moves)
+
             
 
         if event.type == pygame.MOUSEBUTTONUP and event.button == 1:    # Check for left mouse button up

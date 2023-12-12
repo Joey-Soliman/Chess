@@ -1,5 +1,5 @@
 import pygame
-from constants import ROWS, COLS, SQUARE_SIZE, WHITE, BLACK, GREEN, BOARD_HEIGHT, BOARD_WIDTH
+from constants import ROWS, COLS, SQUARE_SIZE, WHITE, BLACK, GREEN, YELLOW, RED, BOARD_HEIGHT, BOARD_WIDTH
 from pieces import King, Queen, Bishop, Knight, Rook, Pawn, Empty
 
 
@@ -62,6 +62,9 @@ class ChessBoard:
         self.position = None
         self.dragging = False
         self.moves = []
+        self.check = None
+        self.checking_pieces = []
+        self.lastMove = Move()
 
     
         
@@ -82,7 +85,13 @@ class ChessBoard:
 
                     win.blit(piece.image, (offset_x, offset_y))
 
-                # Draw indicator transparent green square over piece starting position
+                # Draw indicator for last move - transparent yellow squares
+                if row == self.lastMove.old_row and col == self.lastMove.old_col:
+                    pygame.draw.rect(transparent_surface, YELLOW, (col * SQUARE_SIZE, row * SQUARE_SIZE, SQUARE_SIZE, SQUARE_SIZE))
+                if row == self.lastMove.new_row and col == self.lastMove.new_col:
+                    pygame.draw.rect(transparent_surface, YELLOW, (col * SQUARE_SIZE, row * SQUARE_SIZE, SQUARE_SIZE, SQUARE_SIZE))
+
+                # Draw indicator over starting position - transparent green square
                 if piece == self.piece and self.dragging:        
                     pygame.draw.rect(transparent_surface, GREEN, (col * SQUARE_SIZE, row * SQUARE_SIZE, SQUARE_SIZE, SQUARE_SIZE))
                 
@@ -93,17 +102,20 @@ class ChessBoard:
                     if drag_col == col and drag_row == row:
                         pygame.draw.rect(transparent_surface, GREEN, (col * SQUARE_SIZE, row * SQUARE_SIZE, SQUARE_SIZE, SQUARE_SIZE))
                     else:
-                        if not isinstance(self.chess_board[row][col], Empty):   # Check if not empty and green triangle for indicator                     
+                        if not isinstance(self.chess_board[row][col], Empty):   # Check if not empty and add green triangle for indicator                     
                             vertices = [(col * SQUARE_SIZE, row * SQUARE_SIZE), 
                                         (col * SQUARE_SIZE + SQUARE_SIZE / 5, row * SQUARE_SIZE), 
                                         (col * SQUARE_SIZE, row * SQUARE_SIZE + SQUARE_SIZE / 5)]
                             pygame.draw.polygon(transparent_surface, GREEN, vertices)
                         else:   # Green circles for indicators for valid moves into free spaces
                             pygame.draw.circle(transparent_surface, GREEN, (col * SQUARE_SIZE + (SQUARE_SIZE / 2), row * SQUARE_SIZE + (SQUARE_SIZE / 2)), 20)
+                
+                # Draw indicator for check
+                if (row, col) == self.check:
+                    pygame.draw.circle(transparent_surface, RED, (col * SQUARE_SIZE + (SQUARE_SIZE / 2), row * SQUARE_SIZE + (SQUARE_SIZE / 2)), 48)
 
         win.blit(transparent_surface, (0, 0))
-                         
-                
+                                   
         # Render dragging piece
         if self.piece is not None and self.dragging:
             offset_x = self.position[0] - self.piece.image.get_width() // 2
@@ -134,25 +146,77 @@ class ChessBoard:
                     self.chess_board[row_index][col_index] = empty_piece    # Remove piece from original position and replace with empty piece
                     # Check if new spot has a piece, if so, add that piece to list of taken pieces and remove from list of current pieces
                     old_piece = self.chess_board[new_row][new_col]
-                    if not isinstance(old_piece, Empty):
+                    if not isinstance(old_piece, Empty):    # Check if new spot is not empty
                         if old_piece.color == 'white':
                             self.white_pieces.remove(old_piece)
                             self.white_pieces_taken.append(old_piece)
                         else:
                             self.black_pieces.remove(old_piece)
                             self.black_pieces_taken.append(old_piece)
+                    else:   # if spot is empty check for en passant
+                        if isinstance(piece, Pawn) and col_index != new_col:    # Check if piece is pawn and moved diagonally
+                            if piece.color == 'white':
+                                dead_pawn = self.chess_board[new_row + 1][new_col]
+                                self.black_pieces.remove(dead_pawn)
+                                self.black_pieces_taken.append(dead_pawn)
+                                empty_piece = Empty()
+                                self.chess_board[new_row + 1][new_col] = empty_piece
+                            else:
+                                dead_pawn = self.chess_board[new_row - 1][new_col]
+                                self.white_pieces.remove(dead_pawn)
+                                self.white_pieces_taken.append(dead_pawn)
+                                empty_piece = Empty()
+                                self.chess_board[new_row - 1][new_col] = empty_piece
+                            
                     self.chess_board[new_row][new_col] = piece  # Add piece to new position
+                    self.lastMove.updateMove(piece, row_index, col_index, new_row, new_col)
+                    self.look_for_check(piece.color)
                     return
+                
+    
+    # Look for check on enemy king after you move (takes color of the piece that just moved)
+    def look_for_check(self, color):
+        self.check = None
+        checking_pieces = []
+        # Get location of king
+        king_row = None
+        king_col = None
+        for row_index, row in enumerate(self.chess_board):
+            found = False
+            for col_index, piece in enumerate(row):
+                if piece.type == 'King' and piece.color != color:
+                    king_row = row_index
+                    king_col = col_index
+                    break
+            if found:
+                break
+        # Check to see if any valid moves from any piece of same color will target enemy king
+        for row_index, row in enumerate(self.chess_board):
+            for col_index, piece in enumerate(row):
+                if piece.color == color:
+                    moves = piece.get_valid_moves(row_index, col_index, self)
+                    if (king_row, king_col) in moves:   # if king is in valid move
+                        checking_pieces.append(piece)
+                        self.check = (king_row, king_col)
+        self.checking_pieces = checking_pieces
+        return
+
+
 
 
 
 class Move:
-    def __init__(self, piece, row, col):
-        self.piece = piece
-        self.row = row
-        self.col = col
+    def __init__(self):
+        self.piece = None
+        self.old_row = None
+        self.old_col = None
+        self.new_row = None
+        self.new_col = None
 
-    def updateMove(self, piece, row, col):
+
+    def updateMove(self, piece, old_row, old_col, new_row, new_col):
         self.piece = piece
-        self.row = row
-        self.col = col
+        self.old_row = old_row
+        self.old_col = old_col
+        self.new_row = new_row
+        self.new_col = new_col

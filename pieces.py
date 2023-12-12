@@ -32,6 +32,7 @@ class Piece:
 class King(Piece):
     def __init__(self, color, position):
         super().__init__(color, position)
+        self.type = 'King'
         self.image = white_king_img if color == 'white' else black_king_img
         self.image = pygame.transform.smoothscale(self.image, (PIECE_WIDTH, PIECE_HEIGHT))
 
@@ -61,6 +62,7 @@ class King(Piece):
 class Queen(Piece):
     def __init__(self, color, position):
         super().__init__(color, position)
+        self.type = 'Queen'
         self.image = white_queen_img if color == 'white' else black_queen_img
         self.image = pygame.transform.smoothscale(self.image, (PIECE_WIDTH, PIECE_HEIGHT))
 
@@ -90,6 +92,7 @@ class Queen(Piece):
 class Bishop(Piece):
     def __init__(self, color, position):
         super().__init__(color, position)
+        self.type = 'Bishop'
         self.image = white_bishop_img if color == 'white' else black_bishop_img
         self.image = pygame.transform.smoothscale(self.image, (PIECE_WIDTH, PIECE_HEIGHT))
     
@@ -119,6 +122,7 @@ class Bishop(Piece):
 class Knight(Piece):
     def __init__(self, color, position):
         super().__init__(color, position)
+        self.type = 'Knight'
         self.image = white_knight_img if color == 'white' else black_knight_img
         self.image = pygame.transform.smoothscale(self.image, (PIECE_WIDTH, PIECE_HEIGHT))
 
@@ -147,6 +151,7 @@ class Knight(Piece):
 class Rook(Piece):
     def __init__(self, color, position):
         super().__init__(color, position)
+        self.type = 'Rook'
         self.image = white_rook_img if color == 'white' else black_rook_img
         self.image = pygame.transform.smoothscale(self.image, (PIECE_WIDTH, PIECE_HEIGHT))
 
@@ -176,6 +181,7 @@ class Rook(Piece):
 class Pawn(Piece):
     def __init__(self, color, position):
         super().__init__(color, position)
+        self.type = 'Pawn'
         self.image = white_pawn_img if color == 'white' else black_pawn_img
         self.image = pygame.transform.smoothscale(self.image, (PIECE_WIDTH, PIECE_HEIGHT))
 
@@ -203,6 +209,17 @@ class Pawn(Piece):
                 piece_at_diagonal = board.chess_board[new_row][new_col]
                 if not isinstance(piece_at_diagonal, Empty) and piece_at_diagonal.color != self.color:    # Check diagonal is not empty and diagonal is enemy
                     valid_moves.append((new_row, new_col))
+        
+        # En Passant
+        if board.lastMove.piece != None:
+            if (isinstance(board.lastMove.piece, Pawn) and board.lastMove.piece.color != self.color and     # Check to see if last piece moved was enemy pawn
+            board.lastMove.new_row == row and board.lastMove.new_col == col + 1 or board.lastMove.new_col == col - 1 and    # Check to see if it moved to correct spot
+            board.lastMove.old_row == row - 2 or board.lastMove.old_row == row + 2):  # Check to see if it moved 2 spots
+                if board.lastMove.piece.color == 'white':
+                    valid_moves.append((row + 1, board.lastMove.new_col))
+                else:
+                    valid_moves.append((row - 1, board.lastMove.new_col))
+
 
         return valid_moves
 
@@ -210,3 +227,4 @@ class Pawn(Piece):
 class Empty(Piece):
     def __init__(self):
         super().__init__(None, None)
+        self.type = 'Empty'
