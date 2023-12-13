@@ -204,8 +204,8 @@ class ChessBoard:
         for row_index, row in enumerate(self.chess_board):
             for col_index, piece in enumerate(row):
                 if piece.color == color:
-                    moves = piece.get_valid_moves(row_index, col_index, self)
-                    if (king_row, king_col) in moves:   # if king is in valid move
+                    moves = piece.get_attacks(row_index, col_index, self)
+                    if moves != None and (king_row, king_col) in moves:   # if king is in valid move
                         checking_pieces.append(piece)
                         self.check_pos = (king_row, king_col)
                         if color == 'white': self.check_color = 'black'
@@ -215,19 +215,15 @@ class ChessBoard:
         return
     
 
-    # Tells main if king is in check
-    def in_check(self, color):
-        if self.check_color == color:
-            return True
-        return False
 
 
     # Check if move leaves own King in check - return True if move is valid, false if move leaves king in check
-    def validate_move_check(self, piece, old_row, old_col, new_row, new_col):
+    def validate_move_check(self, old_row, old_col, new_row, new_col):
         temp_board = self.copy_board()  # Copy Board to test moves
-        ans = True  # Return value
         # Move piece
+        piece = temp_board.chess_board[old_row][old_col]
         temp_board.chess_board[new_row][new_col] = piece
+        piece.update_position(new_row, new_col)
         temp_board.chess_board[old_row][old_col] = Empty()
         
         # Get location of king
@@ -236,30 +232,33 @@ class ChessBoard:
         for row_index, row in enumerate(temp_board.chess_board):
             found = False
             for col_index, board_piece in enumerate(row):
-                if piece.type == 'King' and board_piece.color == piece.color:
+                if board_piece.type == 'King' and board_piece.color == piece.color:
                     king_row = row_index
                     king_col = col_index
                     break
             if found:
                 break
-        
+        print('King position: ', king_row, ',', king_col)
+
         # Check to see if any enemy pieces have a valid move attacking the king
         for row_index, row in enumerate(temp_board.chess_board):
             done = False
             for col_index, board_piece in enumerate(row):
                 if board_piece.color != piece.color:    # Enemy piece
-                    moves = piece.get_attacks(row_index, col_index, temp_board)
+                    moves = board_piece.get_attacks(row_index, col_index, temp_board)
                     if moves != None  and (king_row, king_col) in moves:   # if king is in valid move
-                        ans = False
-                        break
+                        print('In here')
+                        return False
             if done:
                 break
-        return ans
+        return True
     
 
     def copy_board(self):
         new_board = ChessBoard()
-        new_board.chess_board = copy.deepcopy(self.chess_board)
+        new_board.chess_board = [
+            [piece.copy_piece() for piece in row] for row in self.chess_board
+        ]
         new_board.lastMove = copy.copy(self.lastMove)
         return new_board
 
@@ -274,6 +273,7 @@ class Move:
         self.new_row = None
         self.new_col = None
         self.piece_taken = None
+        self.color = 'black'
 
     def updateMove(self, piece, old_row, old_col, new_row, new_col, piece_taken):
         self.piece = piece
@@ -282,3 +282,4 @@ class Move:
         self.new_row = new_row
         self.new_col = new_col
         self.piece_taken = piece_taken
+        self.color = piece.color

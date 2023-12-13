@@ -37,15 +37,11 @@ while running:
                 col = mouse_x // SQUARE_SIZE
                 print('Row: ', row,' Col: ', col)
                 piece = chess_board.chess_board[row][col]
-                if not isinstance(piece, Empty):    # Check if there is a piece there
+                if not isinstance(piece, Empty) and piece.color != chess_board.lastMove.color:    # Check if there is a piece there
                     # Bind piece to the mouse
                     dragging = True
                     # Display possible moves (updates moves which gets sent to board.py for rendering through drag_piece function)
-                    if chess_board.in_check(piece.color):   # Check if king for clicked piece is in check
-                        moves = piece.get_valid_moves_check(row, col, chess_board)  # TODO: Valid moves from check position
-                    else:
-                        moves = piece.get_valid_moves(row, col, chess_board)
-                        print(moves)
+                    moves = piece.get_valid_moves(row, col, chess_board)  # TODO: Valid moves from check position
 
             
 

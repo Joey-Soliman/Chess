@@ -36,6 +36,11 @@ class Piece:
         return []
 
 
+    def copy_piece(self):
+        new_piece = self.__class__(self.color, self.position)
+        return new_piece
+
+
 
 
 class King(Piece):
@@ -64,14 +69,13 @@ class King(Piece):
                 else:
                     continue
             else:
-                continue
-        
+                continue      
         # Check if moves expose the king
+        ans = []
         for x in valid_moves:
-            if not board.validate_move_check(self, row, col, x[0], x[1]):
-                valid_moves.remove(x)
-
-        return valid_moves
+            if board.validate_move_check(row, col, x[0], x[1]):
+                ans.append(x)
+        return ans
     
 
     def get_attacks(self, row, col, board):
@@ -95,8 +99,30 @@ class King(Piece):
 
 
     def get_valid_moves_check(self, row, col, board):
-        # TODO: will be the same as get_valid_moves
-        print('TODO')
+        # TODO: Castle - needs a state to check if king or rook has moved yet, cannot castle through check
+        valid_moves = []
+        directions = [(-1, -1), (-1, 0), (-1, 1), (0, -1), (0, 1), (1, -1), (1, 0), (1, 1)]
+        # Check if moves are valid
+        for direction in directions:
+            new_row = row + direction[0]
+            new_col = col + direction[1]
+            
+            if 0 <= new_row < 8 and 0 <= new_col < 8:   # Check if new position is within board limits
+                # TODO: Check if leaves king in check
+                if isinstance(board.chess_board[new_row][new_col], Empty):
+                    valid_moves.append((new_row, new_col))
+                elif board.chess_board[new_row][new_col].color != self.color:
+                    valid_moves.append((new_row, new_col))
+                else:
+                    continue
+            else:
+                continue      
+        # Check if moves expose the king
+        ans = []
+        for x in valid_moves:
+            if board.validate_move_check(row, col, x[0], x[1]):
+                ans.append(x)
+        return ans
     
 
 
@@ -129,10 +155,11 @@ class Queen(Piece):
                 else:
                     break  # Stop if we reach the board's edge
         # Check if moves expose the king
+        ans = []
         for x in valid_moves:
-            if not board.validate_move_check(self, row, col, x[0], x[1]):
-                valid_moves.remove(x)
-        return valid_moves
+            if board.validate_move_check(row, col, x[0], x[1]):
+                ans.append(x)
+        return ans
     
 
     def get_attacks(self, row, col, board):
@@ -156,7 +183,7 @@ class Queen(Piece):
                     break  # Stop if we reach the board's edge
         print(valid_moves)
         return valid_moves
-
+    
 
 
 
@@ -188,10 +215,11 @@ class Bishop(Piece):
                 else:
                     break  # Stop if we reach the board's edge
         # Check if moves expose the king
+        ans = []
         for x in valid_moves:
-            if not board.validate_move_check(self, row, col, x[0], x[1]):
-                valid_moves.remove(x)
-        return valid_moves
+            if board.validate_move_check(row, col, x[0], x[1]):
+                ans.append(x)
+        return ans
     
 
     def get_attacks(self, row, col, board):
@@ -244,10 +272,11 @@ class Knight(Piece):
             else:
                 continue    # Don't add if we reach the board's edge
         # Check if moves expose the king
+        ans = []
         for x in valid_moves:
-            if not board.validate_move_check(self, row, col, x[0], x[1]):
-                valid_moves.remove(x)
-        return valid_moves
+            if board.validate_move_check(row, col, x[0], x[1]):
+                ans.append(x)
+        return ans
 
 
     def get_attacks(self, row, col, board):
@@ -300,10 +329,11 @@ class Rook(Piece):
                 else:
                     break  # Stop if we reach the board's edge
         # Check if moves expose the king
+        ans = []
         for x in valid_moves:
-            if not board.validate_move_check(self, row, col, x[0], x[1]):
-                valid_moves.remove(x)
-        return valid_moves
+            if board.validate_move_check(row, col, x[0], x[1]):
+                ans.append(x)
+        return ans
     
 
     def get_attacks(self, row, col, board):
@@ -367,10 +397,11 @@ class Pawn(Piece):
                 else:
                     valid_moves.append((row - 1, board.lastMove.new_col))
         # Check if moves expose the king
+        ans = []
         for x in valid_moves:
-            if not board.validate_move_check(self, row, col, x[0], x[1]):
-                valid_moves.remove(x)
-        return valid_moves
+            if board.validate_move_check(row, col, x[0], x[1]):
+                ans.append(x)
+        return ans
     
 
     def get_attacks(self, row, col, board):
@@ -412,5 +443,6 @@ class Empty(Piece):
         self.type = 'Empty'
 
 
-def simulate_move(self, old_row, old_col, new_row, new_col, board):
-    pass
+    def copy_piece(self):
+        new_piece = Empty()
+        return new_piece
