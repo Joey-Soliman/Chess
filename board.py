@@ -65,8 +65,10 @@ class ChessBoard:
         self.moves = []
         self.check_pos = None   # Position of King under check
         self.check_color = None # Color of King under check
-        self.checking_pieces = []   # Pieces checking the King
         self.lastMove = Move()  # Keeps track of last move (piece, old_row, old_col, new_row, new_col)
+        self.white_win = False
+        self.stalemate = False
+        self.black_win = False
 
     
         
@@ -187,7 +189,7 @@ class ChessBoard:
     # Look for check on enemy king after you move (takes color of the piece that just moved)
     def look_for_check(self, color):
         self.check_pos = None
-        checking_pieces = []
+        self.check_color = None
         # Get location of king
         king_row = None
         king_col = None
@@ -206,12 +208,21 @@ class ChessBoard:
                 if piece.color == color:
                     moves = piece.get_attacks(row_index, col_index, self)
                     if moves != None and (king_row, king_col) in moves:   # if king is in valid move
-                        checking_pieces.append(piece)
                         self.check_pos = (king_row, king_col)
                         if color == 'white': self.check_color = 'black'
                         else: self.check_color = 'white'
-        self.checking_pieces = checking_pieces
         # TODO: Check for checkmate: see if King has any valid moves or if other piece can take attacking piece
+        total_moves = []
+        for row_index, row in enumerate(self.chess_board):
+            for col_index, piece in enumerate(row):
+                if piece.color != color:
+                    moves = piece.get_valid_moves(row_index, col_index, self)
+                    if moves != None:
+                        for x in moves: total_moves.append(x)
+        if not total_moves:
+            if color == 'white' and self.check_color == 'black': self.white_win = True
+            if color == 'black' and self.check_color == 'white': self.black_win = True
+            if self.check_color == None: self.stalemate = True
         return
     
 
@@ -238,7 +249,6 @@ class ChessBoard:
                     break
             if found:
                 break
-        print('King position: ', king_row, ',', king_col)
 
         # Check to see if any enemy pieces have a valid move attacking the king
         for row_index, row in enumerate(temp_board.chess_board):
@@ -247,13 +257,13 @@ class ChessBoard:
                 if board_piece.color != piece.color:    # Enemy piece
                     moves = board_piece.get_attacks(row_index, col_index, temp_board)
                     if moves != None  and (king_row, king_col) in moves:   # if king is in valid move
-                        print('In here')
                         return False
             if done:
                 break
         return True
     
 
+    # Create a copy of the chessboard and last move
     def copy_board(self):
         new_board = ChessBoard()
         new_board.chess_board = [
@@ -261,6 +271,13 @@ class ChessBoard:
         ]
         new_board.lastMove = copy.copy(self.lastMove)
         return new_board
+
+
+    # Tell main if checkmate or stalemate has occured
+    def game_over(self):
+        if self.white_win == True or self.black_win == True or self.stalemate == True:
+            return True
+        return False
 
 
 

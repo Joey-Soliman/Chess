@@ -181,7 +181,6 @@ class Queen(Piece):
                         break  # Stop in this direction if we encounter own piece
                 else:
                     break  # Stop if we reach the board's edge
-        print(valid_moves)
         return valid_moves
     
 

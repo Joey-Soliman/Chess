@@ -31,19 +31,16 @@ while running:
         # Handle mouse clicks for user input
         if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:  # Check for left mouse button down
             mouse_x, mouse_y = pygame.mouse.get_pos()
-            # print('Mouse_x: ', mouse_x, ' Mouse_y: ', mouse_y)
             if mouse_x <= BOARD_WIDTH and mouse_y <= BOARD_HEIGHT:  # Check if click was within the board area
                 row = mouse_y // SQUARE_SIZE
                 col = mouse_x // SQUARE_SIZE
-                print('Row: ', row,' Col: ', col)
                 piece = chess_board.chess_board[row][col]
-                if not isinstance(piece, Empty) and piece.color != chess_board.lastMove.color:    # Check if there is a piece there
-                    # Bind piece to the mouse
-                    dragging = True
-                    # Display possible moves (updates moves which gets sent to board.py for rendering through drag_piece function)
-                    moves = piece.get_valid_moves(row, col, chess_board)  # TODO: Valid moves from check position
-
-            
+                if not isinstance(piece, Empty) and piece.color != chess_board.lastMove.color:
+                    if not chess_board.game_over():
+                        # Bind piece to the mouse
+                        dragging = True
+                        # Display possible moves (updates moves which gets sent to board.py for rendering through drag_piece function)
+                        moves = piece.get_valid_moves(row, col, chess_board)  # Get all valid moves for piece
 
         if event.type == pygame.MOUSEBUTTONUP and event.button == 1:    # Check for left mouse button up
             dragging = False
@@ -54,7 +51,6 @@ while running:
                 if new_row != row or new_col != col:   # Check if piece is in a new position
                     if (new_row, new_col) in moves:    # Check if new position is a valid move
                         piece.update_position(new_row, new_col)
-                        print(piece.position)
                         chess_board.update_piece(piece, new_row, new_col)    
                 chess_board.stop_drag()
             else: # Not within board area
