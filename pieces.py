@@ -52,7 +52,6 @@ class King(Piece):
 
 
     def get_valid_moves(self, row, col, board):
-        # TODO: Castle - needs a state to check if king or rook has moved yet, cannot castle through check
         valid_moves = []
         directions = [(-1, -1), (-1, 0), (-1, 1), (0, -1), (0, 1), (1, -1), (1, 0), (1, 1)]
         # Check if moves are valid
@@ -75,6 +74,10 @@ class King(Piece):
         for x in valid_moves:
             if board.validate_move_check(row, col, x[0], x[1]):
                 ans.append(x)
+        if board.validate_castle(self, board.chess_board[row][col + 3], 'right'):   # Right side castle
+            ans.append((row, col + 2))
+        if board.validate_castle(self, board.chess_board[row][col - 4], 'left'):    # Left side castle
+            ans.append((row, col -2)) 
         return ans
     
 
@@ -96,33 +99,6 @@ class King(Piece):
                     continue
             else:
                 continue
-
-
-    def get_valid_moves_check(self, row, col, board):
-        # TODO: Castle - needs a state to check if king or rook has moved yet, cannot castle through check
-        valid_moves = []
-        directions = [(-1, -1), (-1, 0), (-1, 1), (0, -1), (0, 1), (1, -1), (1, 0), (1, 1)]
-        # Check if moves are valid
-        for direction in directions:
-            new_row = row + direction[0]
-            new_col = col + direction[1]
-            
-            if 0 <= new_row < 8 and 0 <= new_col < 8:   # Check if new position is within board limits
-                # TODO: Check if leaves king in check
-                if isinstance(board.chess_board[new_row][new_col], Empty):
-                    valid_moves.append((new_row, new_col))
-                elif board.chess_board[new_row][new_col].color != self.color:
-                    valid_moves.append((new_row, new_col))
-                else:
-                    continue
-            else:
-                continue      
-        # Check if moves expose the king
-        ans = []
-        for x in valid_moves:
-            if board.validate_move_check(row, col, x[0], x[1]):
-                ans.append(x)
-        return ans
     
 
 

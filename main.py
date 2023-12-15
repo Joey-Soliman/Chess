@@ -41,11 +41,36 @@ while running:
         if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:  # Check for left mouse button down
             mouse_x, mouse_y = pygame.mouse.get_pos()
             if mouse_x <= BOARD_WIDTH and mouse_y <= BOARD_HEIGHT:  # Check if click was within the board area
+                if chess_board.pawn_back_rank != None:  # Check for pawn promotion
+                    row = chess_board.pawn_back_rank.position[0]
+                    col = chess_board.pawn_back_rank.position[1]
+                    if chess_board.pawn_back_rank.color == 'white':
+                        promote_rect = pygame.Rect(col * SQUARE_SIZE, row * SQUARE_SIZE, SQUARE_SIZE, SQUARE_SIZE * 4)
+                        if promote_rect.collidepoint(mouse_x, mouse_y):
+                            if mouse_y // SQUARE_SIZE == 0:
+                                chess_board.update_pawn(1)
+                            elif mouse_y // SQUARE_SIZE == 1:
+                                chess_board.update_pawn(2)
+                            elif mouse_y // SQUARE_SIZE == 2:
+                                chess_board.update_pawn(3)
+                            else:
+                                chess_board.update_pawn(4)
+                    else:
+                        promote_rect = pygame.Rect(col * SQUARE_SIZE, row * SQUARE_SIZE, SQUARE_SIZE, SQUARE_SIZE * 4)
+                        if promote_rect.collidepoint(mouse_x, mouse_y):
+                            if mouse_y // SQUARE_SIZE == 7:
+                                chess_board.update_pawn(1)
+                            elif mouse_y // SQUARE_SIZE == 6:
+                                chess_board.update_pawn(2)
+                            elif mouse_y // SQUARE_SIZE == 5:
+                                chess_board.update_pawn(3)
+                            else:
+                                chess_board.update_pawn(4)  
                 row = mouse_y // SQUARE_SIZE
                 col = mouse_x // SQUARE_SIZE
                 piece = chess_board.chess_board[row][col]
                 if not isinstance(piece, Empty) and piece.color != chess_board.lastMove.color:
-                    if not chess_board.game_over():
+                    if not chess_board.game_over() and chess_board.pawn_back_rank == None:
                         # Bind piece to the mouse
                         dragging = True
                         # Display possible moves (updates moves which gets sent to board.py for rendering through drag_piece function)
