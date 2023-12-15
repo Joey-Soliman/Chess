@@ -2,6 +2,7 @@ import pygame
 from board import ChessBoard
 from pieces import Empty
 from constants import SCREEN_WIDTH, SCREEN_HEIGHT, BOARD_WIDTH, BOARD_HEIGHT, SQUARE_SIZE
+from ui import rematch_button
 
 pygame.init()
 
@@ -22,6 +23,14 @@ moves = []
 row = None
 col = None
 
+# Game over button
+rect_width = SQUARE_SIZE * (4 + 2/3)
+rect_height = SQUARE_SIZE * (1 + 1/3)
+top_left_x = SQUARE_SIZE * (1 + 2/3)
+mid_left_y = SQUARE_SIZE * 4
+button_rect = pygame.Rect(top_left_x, mid_left_y, rect_width, rect_height)
+
+
 while running:
     # Handle events
     for event in pygame.event.get():
@@ -41,6 +50,9 @@ while running:
                         dragging = True
                         # Display possible moves (updates moves which gets sent to board.py for rendering through drag_piece function)
                         moves = piece.get_valid_moves(row, col, chess_board)  # Get all valid moves for piece
+            if chess_board.game_over():
+                if button_rect.collidepoint(mouse_x, mouse_y):
+                    chess_board = ChessBoard()      # Start over
 
         if event.type == pygame.MOUSEBUTTONUP and event.button == 1:    # Check for left mouse button up
             dragging = False
@@ -63,6 +75,18 @@ while running:
 
     # Rendering the board and pieces
     chess_board.render(win)
+
+    # Render game over
+    if chess_board.game_over():
+        text = 'Checkmate - White is Victorious!'
+        if chess_board.black_win:
+            text = 'Checkmate - Black is Victorious!'
+        if chess_board.stalemate:
+            text = 'Stalemate'
+        mouse_pos =  pygame.mouse.get_pos()
+        button_active = button_rect.collidepoint(mouse_pos)
+        rematch_button(win, text, button_active)
+
     pygame.display.flip()
     clock.tick(60)
 
