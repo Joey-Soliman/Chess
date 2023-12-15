@@ -47,6 +47,7 @@ class King(Piece):
     def __init__(self, color, position):
         super().__init__(color, position)
         self.type = 'King'
+        self.value = 100
         self.image = white_king_img if color == 'white' else black_king_img
         self.image = pygame.transform.smoothscale(self.image, (PIECE_WIDTH, PIECE_HEIGHT))
 
@@ -107,6 +108,7 @@ class Queen(Piece):
     def __init__(self, color, position):
         super().__init__(color, position)
         self.type = 'Queen'
+        self.value = 9
         self.image = white_queen_img if color == 'white' else black_queen_img
         self.image = pygame.transform.smoothscale(self.image, (PIECE_WIDTH, PIECE_HEIGHT))
 
@@ -166,6 +168,7 @@ class Bishop(Piece):
     def __init__(self, color, position):
         super().__init__(color, position)
         self.type = 'Bishop'
+        self.value = 3
         self.image = white_bishop_img if color == 'white' else black_bishop_img
         self.image = pygame.transform.smoothscale(self.image, (PIECE_WIDTH, PIECE_HEIGHT))
     
@@ -225,6 +228,7 @@ class Knight(Piece):
     def __init__(self, color, position):
         super().__init__(color, position)
         self.type = 'Knight'
+        self.value = 3
         self.image = white_knight_img if color == 'white' else black_knight_img
         self.image = pygame.transform.smoothscale(self.image, (PIECE_WIDTH, PIECE_HEIGHT))
 
@@ -280,6 +284,7 @@ class Rook(Piece):
     def __init__(self, color, position):
         super().__init__(color, position)
         self.type = 'Rook'
+        self.value = 5
         self.image = white_rook_img if color == 'white' else black_rook_img
         self.image = pygame.transform.smoothscale(self.image, (PIECE_WIDTH, PIECE_HEIGHT))
 
@@ -339,6 +344,7 @@ class Pawn(Piece):
     def __init__(self, color, position):
         super().__init__(color, position)
         self.type = 'Pawn'
+        self.value = 1
         self.image = white_pawn_img if color == 'white' else black_pawn_img
         self.image = pygame.transform.smoothscale(self.image, (PIECE_WIDTH, PIECE_HEIGHT))
 
